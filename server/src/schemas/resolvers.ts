@@ -13,8 +13,15 @@ const resolvers = {
     },
   },
   Mutation: {
-    addUser: async (_parent: any, { username, email }: { username: string; email: string }): Promise<UserDocument> => {
-      return await User.create({ username, email });
+    addUser: async (_parent: any, { username, email, password }: { username: string; email: string; password: string; }): Promise<UserDocument> => {
+      return await User.create({ username, email, password });
+    },
+    login: async (_parent:any, { email, password }: {email: string; password: string;}) => {
+      const user = await User.findOne({ email });
+      if (!user || !(await user.isCorrectPassword(password))) {
+        throw new Error('Invalid credentials');
+      }
+      return { user };
     },
     saveBook: async (_parent: any, { userId, book }: { userId: string; book: BookDocument }): Promise<UserDocument | null> => {
       return await User.findByIdAndUpdate(

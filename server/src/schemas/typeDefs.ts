@@ -15,6 +15,7 @@ const typeDefs = `
     email: String!
     savedBooks: [Book]
     bookCount: Int
+    password: String!
   }
 
   type Query {
@@ -23,7 +24,7 @@ const typeDefs = `
   }
 
   type Mutation {
-    addUser(username: String!, email: String!): User
+    addUser(username: String!, email: String!, password: String!): User
     saveBook(userId: ID!, book: BookInput!): User
     removeBook(userId: ID!, bookId: String!): User
   }
