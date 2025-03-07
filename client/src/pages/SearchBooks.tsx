@@ -11,7 +11,6 @@ import {
 
 import Auth from '../utils/auth';
 import { searchGoogleBooks } from '../utils/API';
-import { SAVE_BOOK } from '../utils/mutations';
 
 import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
 import type { Book } from '../models/Book';
@@ -70,38 +69,39 @@ const SearchBooks = () => {
 
   // create function to handle saving a book to our database
   const handleSaveBook = async (bookId: string) => {
-    // find the book in `searchedBooks` state by the matching id
-    const bookToSave: Book = searchedBooks.find((book) => book.bookId === bookId)!;
-
-    // get token
-    const token = Auth.loggedIn() ? Auth.getToken() : null;
-
-    if (!token) {
-      return false;
+    // Find the book in `searchedBooks` state by the matching id
+    const bookToSave: Book | undefined = searchedBooks.find((book) => book.bookId === bookId);
+    
+    if (!bookToSave) return;
+  
+    // Get user ID from localStorage (since the token is just an unencrypted user ID)
+    const userId = localStorage.getItem('id_token');
+  
+    if (!userId) {
+      console.error("No user logged in.");
+      return;
     }
-
+  
     try {
       const { data } = await saveBook({
-        //get userID from local Storage
-        //bookToSave has our book info
-        variables: {userID, Book}
-      })
+        variables: {
+          userId,  // Pass the user ID from localStorage
+          book: bookToSave, // Pass the book data
+        },
+        context: {
+          headers: {
+            authorization: `Bearer ${userId}`, // Send the user ID as a Bearer token
+          },
+        },
+      });
+  
+      // If the book is successfully saved, update the state
+      setSavedBookIds([...savedBookIds, bookToSave.bookId]);
+    } catch (err) {
+      console.error("Error saving book:", err);
     }
-
-  //   try {
-  //     const response = await saveBook(bookToSave, token);
-
-  //     if (!response.ok) {
-  //       throw new Error('something went wrong!');
-  //     }
-
-  //     // if book successfully saves to user's account, save book id to state
-  //     setSavedBookIds([...savedBookIds, bookToSave.bookId]);
-  //   } catch (err) {
-  //     console.error(err);
-  //   }
-  // };
-
+  };
+  
   return (
     <>
       <div className="text-light bg-dark p-5">

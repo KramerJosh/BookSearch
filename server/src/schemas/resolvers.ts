@@ -11,6 +11,13 @@ const resolvers = {
         $or: [{ _id: id }, { username }],
       });
     },
+    me: async (_parent: any, _args: any, context: { id_token?: string }): Promise<UserDocument | null> => {
+      if (!context.id_token) {
+        throw new Error("Not logged in");
+      }
+      return await User.findById(context.id_token);
+    }
+    
   },
   Mutation: {
     addUser: async (_parent: any, { username, email, password }: { username: string; email: string; password: string; }): Promise<UserDocument> => {
