@@ -15,7 +15,6 @@ const typeDefs = `
     email: String!
     savedBooks: [Book]
     bookCount: Int
-    password: String!
   }
 
   type Query {
@@ -27,9 +26,15 @@ const typeDefs = `
     addUser(username: String!, email: String!, password: String!): User
     saveBook(userId: ID!, book: BookInput!): User
     removeBook(userId: ID!, bookId: String!): User
+    login(email: String!, password: String!): AuthPayload
   }
 
+  type AuthPayload {
+  user: User
+  }
+  
   input BookInput {
+    _id: ID
     bookId: String!
     title: String!
     authors: [String]

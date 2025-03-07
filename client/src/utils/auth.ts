@@ -10,14 +10,16 @@ interface UserToken {
 class AuthService {
   // get user data
   getProfile() {
-    return jwtDecode(this.getToken() || '');
+    // return jwtDecode(this.getToken() || '');
+    return this.getToken();
   }
 
   // check if user's logged in
   loggedIn() {
     // Checks if there is a saved token and it's still valid
     const token = this.getToken();
-    return !!token && !this.isTokenExpired(token); // handwaiving here
+    return token;
+    // return !!token && !this.isTokenExpired(token); // handwaiving here
   }
 
   // check if token is expired

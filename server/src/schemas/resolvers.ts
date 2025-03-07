@@ -16,12 +16,10 @@ const resolvers = {
     addUser: async (_parent: any, { username, email, password }: { username: string; email: string; password: string; }): Promise<UserDocument> => {
       return await User.create({ username, email, password });
     },
-    login: async (_parent:any, { email, password }: {email: string; password: string;}) => {
+    login: async (_parent: any, { email }: { email: string }) => {
       const user = await User.findOne({ email });
-      if (!user || !(await user.isCorrectPassword(password))) {
-        throw new Error('Invalid credentials');
-      }
-      return { user };
+
+      return { user }; // Returns { user } to match `AuthPayload`
     },
     saveBook: async (_parent: any, { userId, book }: { userId: string; book: BookDocument }): Promise<UserDocument | null> => {
       return await User.findByIdAndUpdate(
@@ -37,6 +35,9 @@ const resolvers = {
         { new: true }
       );
     },
+  },
+  User: {
+    bookCount: (parent: UserDocument) => parent.savedBooks.length, 
   },
 };
 
