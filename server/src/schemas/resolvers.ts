@@ -11,13 +11,16 @@ const resolvers = {
         $or: [{ _id: id }, { username }],
       });
     },
-    me: async (_parent: any, _args: any, context: { id_token?: string }): Promise<UserDocument | null> => {
-      if (!context.id_token) {
-        throw new Error("Not logged in");
+    me: async (_parent: any, args: { userID: string }) => {
+      console.log('Received userID:', args.userID);
+
+      if (!args.userID) {
+        throw new Error('User ID is required');
       }
-      return await User.findById(context.id_token);
+
+      return await User.findById(args.userID);
     }
-    
+     
   },
   Mutation: {
     addUser: async (_parent: any, { username, email, password }: { username: string; email: string; password: string; }): Promise<UserDocument> => {
@@ -35,13 +38,25 @@ const resolvers = {
         { new: true, runValidators: true }
       );
     },
-    removeBook: async (_parent: any, { userId, bookId }: { userId: string; bookId: string }): Promise<UserDocument | null> => {
-      return await User.findByIdAndUpdate(
-        userId,
-        { $pull: { savedBooks: { bookId } } },
-        { new: true }
-      );
+    deleteBook: async (_parent: any, { userId, bookId }: { userId: string; bookId: string }): Promise<UserDocument | null> => {
+      try {
+        const updatedUser = await User.findByIdAndUpdate(
+          userId,
+          { $pull: { savedBooks: { bookId } } },
+          { new: true }
+        );
+    
+        if (!updatedUser) {
+          throw new Error("User not found");
+        }
+    
+        return updatedUser;
+      } catch (error) {
+        console.error("Error deleting book:", error);
+        throw new Error("Failed to delete book");
+      }
     },
+    
   },
   User: {
     bookCount: (parent: UserDocument) => parent.savedBooks.length, 

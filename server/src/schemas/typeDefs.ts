@@ -20,13 +20,13 @@ const typeDefs = `
   type Query {
     users: [User]
     getUser(id: ID, username: String): User
-    me: User
+    me(userID: String!): User
   }
 
   type Mutation {
     addUser(username: String!, email: String!, password: String!): User
     saveBook(userId: ID!, book: BookInput!): User
-    removeBook(userId: ID!, bookId: String!): User
+    deleteBook(bookId: ID!): User
     login(email: String!, password: String!): AuthPayload
   }
 
