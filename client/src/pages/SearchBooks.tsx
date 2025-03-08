@@ -1,57 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
-import {
-  Container,
-  Col,
-  Form,
-  Button,
-  Card,
-  Row
-} from 'react-bootstrap';
+import { Container, Col, Form, Button, Card, Row } from 'react-bootstrap';
+import { useMutation } from '@apollo/client';
 
 import Auth from '../utils/auth';
 import { searchGoogleBooks } from '../utils/API';
-
-import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
 import type { Book } from '../models/Book';
 import type { GoogleAPIBook } from '../models/GoogleAPIBook';
 import { SAVE_BOOK } from '../utils/mutations';
-import { useMutation } from '@apollo/client';
 
 const SearchBooks = () => {
-  // create state for holding returned google api data
   const [searchedBooks, setSearchedBooks] = useState<Book[]>([]);
-  // create state for holding our search field data
   const [searchInput, setSearchInput] = useState('');
+  const [saveBook, { error }] = useMutation(SAVE_BOOK);
+  const userID = localStorage.getItem("id_token")
 
-  // create state to hold saved bookId values
-  const [savedBookIds, setSavedBookIds] = useState(getSavedBookIds());
-  const [saveBook, { error }] = useMutation(SAVE_BOOK)
-
-
-  // set up useEffect hook to save `savedBookIds` list to localStorage on component unmount
-  // learn more here: https://reactjs.org/docs/hooks-effect.html#effects-with-cleanup
-  useEffect(() => {
-    return () => saveBookIds(savedBookIds);
-  });
-
-  // create method to search for books and set state on form submit
   const handleFormSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    if (!searchInput) {
-      return false;
-    }
+    if (!searchInput) return;
 
     try {
       const response = await searchGoogleBooks(searchInput);
-
-      if (!response.ok) {
-        throw new Error('something went wrong!');
-      }
-
+      if (!response.ok) throw new Error('Something went wrong!');
+      
       const { items } = await response.json();
-
       const bookData = items.map((book: GoogleAPIBook) => ({
         bookId: book.id,
         authors: book.volumeInfo.authors || ['No author to display'],
@@ -67,41 +39,17 @@ const SearchBooks = () => {
     }
   };
 
-  // create function to handle saving a book to our database
   const handleSaveBook = async (bookId: string) => {
-    // Find the book in `searchedBooks` state by the matching id
-    const bookToSave: Book | undefined = searchedBooks.find((book) => book.bookId === bookId);
-    
+    const bookToSave = searchedBooks.find((book) => book.bookId === bookId);
     if (!bookToSave) return;
-  
-    // Get user ID from localStorage (since the token is just an unencrypted user ID)
-    const userId = localStorage.getItem('id_token');
-  
-    if (!userId) {
-      console.error("No user logged in.");
-      return;
-    }
-  
+//PUT IN USER ID HERE
     try {
-      const { data } = await saveBook({
-        variables: {
-          userId,  // Pass the user ID from localStorage
-          book: bookToSave, // Pass the book data
-        },
-        context: {
-          headers: {
-            authorization: `Bearer ${userId}`, // Send the user ID as a Bearer token
-          },
-        },
-      });
-  
-      // If the book is successfully saved, update the state
-      setSavedBookIds([...savedBookIds, bookToSave.bookId]);
+      await saveBook({ variables: { userId: userID, book: bookToSave } });
     } catch (err) {
-      console.error("Error saving book:", err);
+      console.error('Error saving book:', err);
     }
   };
-  
+
   return (
     <>
       <div className="text-light bg-dark p-5">
@@ -131,37 +79,28 @@ const SearchBooks = () => {
 
       <Container>
         <h2 className='pt-5'>
-          {searchedBooks.length
-            ? `Viewing ${searchedBooks.length} results:`
-            : 'Search for a book to begin'}
+          {searchedBooks.length ? `Viewing ${searchedBooks.length} results:` : 'Search for a book to begin'}
         </h2>
         <Row>
-          {searchedBooks.map((book) => {
-            return (
-              <Col md="4" key={book.bookId}>
-                <Card border='dark'>
-                  {book.image ? (
-                    <Card.Img src={book.image} alt={`The cover for ${book.title}`} variant='top' />
-                  ) : null}
-                  <Card.Body>
-                    <Card.Title>{book.title}</Card.Title>
-                    <p className='small'>Authors: {book.authors}</p>
-                    <Card.Text>{book.description}</Card.Text>
-                    {Auth.loggedIn() && (
-                      <Button
-                        disabled={savedBookIds?.some((savedBookId: string) => savedBookId === book.bookId)}
-                        className='btn-block btn-info'
-                        onClick={() => handleSaveBook(book.bookId)}>
-                        {savedBookIds?.some((savedBookId: string) => savedBookId === book.bookId)
-                          ? 'This book has already been saved!'
-                          : 'Save this Book!'}
-                      </Button>
-                    )}
-                  </Card.Body>
-                </Card>
-              </Col>
-            );
-          })}
+          {searchedBooks.map((book) => (
+            <Col md="4" key={book.bookId}>
+              <Card border='dark'>
+                {book.image && <Card.Img src={book.image} alt={`The cover for ${book.title}`} variant='top' />}
+                <Card.Body>
+                  <Card.Title>{book.title}</Card.Title>
+                  <p className='small'>Authors: {book.authors}</p>
+                  <Card.Text>{book.description}</Card.Text>
+                  {Auth.loggedIn() && (
+                    <Button
+                      className='btn-block btn-info'
+                      onClick={() => handleSaveBook(book.bookId)}>
+                      Save this Book!
+                    </Button>
+                  )}
+                </Card.Body>
+              </Card>
+            </Col>
+          ))}
         </Row>
       </Container>
     </>
