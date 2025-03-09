@@ -1,8 +1,5 @@
-import { useState } from "react";
 import { Container, Card, Button, Row, Col } from "react-bootstrap";
 import { useQuery, useMutation } from "@apollo/client";
-
-import Auth from "../utils/auth";
 import { GET_ME } from "../utils/queries";
 import { DELETE_BOOK } from "../utils/mutations";
 import { removeBookId } from "../utils/localStorage";
@@ -10,26 +7,26 @@ import type { User } from "../models/User";
 
 const SavedBooks = () => {
   // Send the userID directly from localStorage
+  // not sure if there's a better way of handling this, but if we aren't worrying about authentication this seems ok
   const { loading, data } = useQuery(GET_ME, {
     variables: {
-      userID: localStorage.getItem('id_token'), // Send the userID directly
+      userID: localStorage.getItem('id_token'),
     },
   });
   
 
 
   const [deleteBook] = useMutation(DELETE_BOOK, {
-    refetchQueries: ["GetMe"], // Ensure UI updates
+    //when you delete the buttons should update
+    refetchQueries: ["GetMe"], 
   });
   const userData: User | null = data?.me || null;
-  console.log("User Data:", userData); // 🔍 Debugging
-  console.log("Saved Books:", userData?.savedBooks);
 
   const handleDeleteBook = async (bookId: string) => {
     try {
       const { data } = await deleteBook({
         variables: {
-          userId: localStorage.getItem("id_token"), // Get userId from localStorage
+          userId: localStorage.getItem("id_token"), 
           bookId,
         },
         update(cache) {
@@ -52,7 +49,7 @@ const SavedBooks = () => {
       });
   
       console.log("Deleted book:", data);
-      removeBookId(bookId); // Remove from localStorage
+      removeBookId(bookId); 
     } catch (err) {
       console.error("Error deleting book:", err);
     }
