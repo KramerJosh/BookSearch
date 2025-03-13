@@ -6,11 +6,16 @@ import { expressMiddleware } from "@apollo/server/express4";
 import dotenv from "dotenv";
 import { typeDefs, resolvers } from "./schemas/index.js";
 import db from "./config/connection.js";
+import { fileURLToPath } from "node:url";
 
 // Load environment variables - doing things this way will hopefully make deploying to render a bit more straightforward.
 dotenv.config();
 
 const PORT = process.env.PORT || 3001;
+//__filename is part of commonJS - we're going to convert the file:// to a path on the computer
+const __filename = fileURLToPath(import.meta.url)
+//takes filepath and gets dir it's in
+const __dirname = path.dirname(__filename)
 
 // Create a new Apollo Server instance
 const server = new ApolloServer({
